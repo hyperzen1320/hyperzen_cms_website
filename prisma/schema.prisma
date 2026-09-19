@@ -1,0 +1,922 @@
+// Hyperzen Innovation — database schema
+// Provider: PostgreSQL (compatible with Supabase, Neon, and any standard Postgres 14+)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  PROPOSAL
+  WON
+  LOST
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+  FREELANCE
+}
+
+enum WorkMode {
+  ONSITE
+  HYBRID
+  REMOTE
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+  OTHER
+}
+
+enum ProductStatus {
+  CONCEPT
+  IN_DEVELOPMENT
+  BETA
+  LIVE
+  SUNSET
+}
+
+enum NavLocation {
+  HEADER
+  FOOTER_SERVICES
+  FOOTER_COMPANY
+  FOOTER_RESOURCES
+  FOOTER_LEGAL
+}
+
+enum ApplicationStatus {
+  NEW
+  REVIEWING
+  SHORTLISTED
+  REJECTED
+  HIRED
+}
+
+// ---------------------------------------------------------------------------
+// Auth
+// ---------------------------------------------------------------------------
+
+model AdminUser {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String
+  passwordHash String
+  roleId       String?
+  staffRole    StaffRole? @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  avatarUrl    String?
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  sessions      Session[]
+  leadNotes     LeadNote[]
+  assignedLeads Lead[]            @relation("LeadAssignee")
+  revisions     ContentRevision[]
+  notifications Notification[]
+  authoredPosts BlogPost[]        @relation("PostAuthor")
+  uploadedMedia Media[]
+
+  @@index([email])
+  @@index([roleId])
+}
+
+model Session {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  userId    String
+  user      AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userAgent String?
+  ip        String?
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// ---------------------------------------------------------------------------
+// Pages & modular page builder
+// ---------------------------------------------------------------------------
+
+model Page {
+  id             String        @id @default(cuid())
+  slug           String        @unique
+  title          String
+  description    String?
+  status         ContentStatus @default(DRAFT)
+  isSystem       Boolean       @default(false)
+  seoTitle       String?
+  seoDescription String?
+  ogImage        String?
+  canonicalUrl   String?
+  noIndex        Boolean       @default(false)
+  publishedAt    DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  sections PageSection[]
+
+  @@index([slug])
+  @@index([status])
+}
+
+model PageSection {
+  id        String   @id @default(cuid())
+  pageId    String
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  blockType String
+  name      String?
+  content   Json     @default("{}")
+  settings  Json     @default("{}")
+  order     Int      @default(0)
+  isVisible Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([pageId, order])
+}
+
+// ---------------------------------------------------------------------------
+// Services / Solutions / Industries
+// ---------------------------------------------------------------------------
+
+model Service {
+  id             String        @id @default(cuid())
+  slug           String        @unique
+  title          String
+  icon           String        @default("Sparkles")
+  tagline        String?
+  shortDesc      String
+  heroTitle      String?
+  heroSubtitle   String?
+  problemTitle   String?
+  problemText    String?
+  solutionTitle  String?
+  solutionText   String?
+  detailedDesc   String?
+  features       Json          @default("[]")
+  capabilities   Json          @default("[]")
+  process        Json          @default("[]")
+  technologies   Json          @default("[]")
+  benefits       Json          @default("[]")
+  useCases       Json          @default("[]")
+  faqs           Json          @default("[]")
+  ctaTitle       String?
+  ctaDescription String?
+  ctaLabel       String?
+  ctaUrl         String?
+  imageUrl       String?
+  videoUrl       String?
+  status         ContentStatus @default(DRAFT)
+  isFeatured     Boolean       @default(false)
+  order          Int           @default(0)
+  seoTitle       String?
+  seoDescription String?
+  ogImage        String?
+  noIndex        Boolean       @default(false)
+  isDemo         Boolean       @default(false)
+  publishedAt    DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  projects Project[] @relation("ProjectServices")
+
+  @@index([status, order])
+  @@index([slug])
+  @@index([isFeatured])
+}
+
+model Solution {
+  id             String        @id @default(cuid())
+  slug           String        @unique
+  title          String
+  icon           String        @default("Layers")
+  shortDesc      String
+  heroTitle      String?
+  overview       String?
+  outcomes       Json          @default("[]")
+  capabilities   Json          @default("[]")
+  deliverables   Json          @default("[]")
+  technologies   Json          @default("[]")
+  faqs           Json          @default("[]")
+  imageUrl       String?
+  status         ContentStatus @default(DRAFT)
+  isFeatured     Boolean       @default(false)
+  order          Int           @default(0)
+  seoTitle       String?
+  seoDescription String?
+  ogImage        String?
+  noIndex        Boolean       @default(false)
+  isDemo         Boolean       @default(false)
+  publishedAt    DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([status, order])
+  @@index([slug])
+}
+
+model Industry {
+  id             String        @id @default(cuid())
+  slug           String        @unique
+  name           String
+  icon           String        @default("Building2")
+  shortDesc      String
+  heroTitle      String?
+  description    String?
+  challenges     Json          @default("[]")
+  solutions      Json          @default("[]")
+  useCases       Json          @default("[]")
+  stats          Json          @default("[]")
+  faqs           Json          @default("[]")
+  imageUrl       String?
+  status         ContentStatus @default(DRAFT)
+  isFeatured     Boolean       @default(false)
+  order          Int           @default(0)
+  seoTitle       String?
+  seoDescription String?
+  ogImage        String?
+  noIndex        Boolean       @default(false)
+  isDemo         Boolean       @default(false)
+  publishedAt    DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  projects Project[]
+
+  @@index([status, order])
+  @@index([slug])
+}
+
+// ---------------------------------------------------------------------------
+// Products & Projects
+// ---------------------------------------------------------------------------
+
+model Product {
+  id              String        @id @default(cuid())
+  slug            String        @unique
+  name            String
+  tagline         String?
+  logoUrl         String?
+  coverUrl        String?
+  description     String
+  longDescription String?
+  category        String?
+  screenshots     Json          @default("[]")
+  features        Json          @default("[]")
+  technologies    Json          @default("[]")
+  pricing         Json          @default("[]")
+  websiteUrl      String?
+  ctaLabel        String?
+  ctaUrl          String?
+  productStatus   ProductStatus @default(IN_DEVELOPMENT)
+  status          ContentStatus @default(DRAFT)
+  isFeatured      Boolean       @default(false)
+  order           Int           @default(0)
+  seoTitle        String?
+  seoDescription  String?
+  ogImage         String?
+  noIndex         Boolean       @default(false)
+  isDemo          Boolean       @default(false)
+  publishedAt     DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([status, order])
+  @@index([slug])
+}
+
+model Project {
+  id             String        @id @default(cuid())
+  slug           String        @unique
+  title          String
+  clientName     String?
+  clientLogoUrl  String?
+  summary        String
+  challenge      String?
+  solutionText   String?
+  results        Json          @default("[]")
+  technologies   Json          @default("[]")
+  images         Json          @default("[]")
+  coverUrl       String?
+  videoUrl       String?
+  projectUrl     String?
+  year           Int?
+  duration       String?
+  industryId     String?
+  industry       Industry?     @relation(fields: [industryId], references: [id], onDelete: SetNull)
+  testimonialId  String?
+  testimonial    Testimonial?  @relation(fields: [testimonialId], references: [id], onDelete: SetNull)
+  services       Service[]     @relation("ProjectServices")
+  status         ContentStatus @default(DRAFT)
+  isFeatured     Boolean       @default(false)
+  order          Int           @default(0)
+  seoTitle       String?
+  seoDescription String?
+  ogImage        String?
+  noIndex        Boolean       @default(false)
+  isDemo         Boolean       @default(false)
+  publishedAt    DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([status, order])
+  @@index([slug])
+  @@index([industryId])
+}
+
+// ---------------------------------------------------------------------------
+// Testimonials
+// ---------------------------------------------------------------------------
+
+model Testimonial {
+  id          String        @id @default(cuid())
+  clientName  String
+  designation String?
+  company     String?
+  companyLogo String?
+  photoUrl    String?
+  quote       String
+  rating      Int?          @default(5)
+  status      ContentStatus @default(DRAFT)
+  isFeatured  Boolean       @default(false)
+  order       Int           @default(0)
+  isDemo      Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  projects Project[]
+
+  @@index([status, order])
+}
+
+// ---------------------------------------------------------------------------
+// Insights (blog)
+// ---------------------------------------------------------------------------
+
+model Category {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String?
+  color       String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  posts BlogPost[]
+
+  @@index([slug])
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  name      String
+  createdAt DateTime @default(now())
+
+  posts BlogPost[] @relation("PostTags")
+
+  @@index([slug])
+}
+
+model BlogPost {
+  id             String        @id @default(cuid())
+  slug           String        @unique
+  title          String
+  excerpt        String?
+  content        String        @default("")
+  coverUrl       String?
+  readingMinutes Int           @default(1)
+  authorId       String?
+  author         AdminUser?    @relation("PostAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  authorName     String?
+  categoryId     String?
+  category       Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  tags           Tag[]         @relation("PostTags")
+  status         ContentStatus @default(DRAFT)
+  isFeatured     Boolean       @default(false)
+  views          Int           @default(0)
+  seoTitle       String?
+  seoDescription String?
+  ogImage        String?
+  noIndex        Boolean       @default(false)
+  isDemo         Boolean       @default(false)
+  publishedAt    DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([status, publishedAt])
+  @@index([slug])
+  @@index([categoryId])
+}
+
+// ---------------------------------------------------------------------------
+// Careers
+// ---------------------------------------------------------------------------
+
+model Job {
+  id               String         @id @default(cuid())
+  slug             String         @unique
+  title            String
+  department       String
+  location         String
+  workMode         WorkMode       @default(ONSITE)
+  employmentType   EmploymentType @default(FULL_TIME)
+  experience       String?
+  salaryMin        Int?
+  salaryMax        Int?
+  salaryCurrency   String?        @default("INR")
+  showSalary       Boolean        @default(false)
+  description      String
+  responsibilities Json           @default("[]")
+  requirements     Json           @default("[]")
+  benefits         Json           @default("[]")
+  applyEmail       String?
+  applyUrl         String?
+  status           ContentStatus  @default(DRAFT)
+  order            Int            @default(0)
+  seoTitle         String?
+  seoDescription   String?
+  noIndex          Boolean        @default(false)
+  isDemo           Boolean        @default(false)
+  closesAt         DateTime?
+  publishedAt      DateTime?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  applications JobApplication[]
+
+  @@index([status, order])
+  @@index([slug])
+}
+
+model JobApplication {
+  id        String            @id @default(cuid())
+  jobId     String?
+  job       Job?              @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  name      String
+  email     String
+  phone     String?
+  linkedin  String?
+  portfolio String?
+  resumeUrl String?
+  message   String?
+  status    ApplicationStatus @default(NEW)
+  source    String?
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@index([jobId])
+  @@index([status])
+  @@index([email])
+}
+
+// ---------------------------------------------------------------------------
+// FAQ
+// ---------------------------------------------------------------------------
+
+model FAQ {
+  id        String        @id @default(cuid())
+  question  String
+  answer    String
+  category  String?       @default("General")
+  order     Int           @default(0)
+  status    ContentStatus @default(PUBLISHED)
+  isDemo    Boolean       @default(false)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([status, order])
+  @@index([category])
+}
+
+// ---------------------------------------------------------------------------
+// Leads / CRM
+// ---------------------------------------------------------------------------
+
+model Lead {
+  id           String     @id @default(cuid())
+  name         String
+  email        String
+  phone        String?
+  company      String?
+  website      String?
+  service      String?
+  budget       String?
+  timeline     String?
+  message      String
+  status       LeadStatus @default(NEW)
+  source       String?
+  sourcePage   String?
+  referrer     String?
+  utmSource    String?
+  utmMedium    String?
+  utmCampaign  String?
+  utmTerm      String?
+  utmContent   String?
+  ip           String?
+  userAgent    String?
+  assignedToId String?
+  assignedTo   AdminUser? @relation("LeadAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  isDemo       Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  notes LeadNote[]
+
+  @@index([status, createdAt])
+  @@index([email])
+  @@index([createdAt])
+  @@index([assignedToId])
+}
+
+model LeadNote {
+  id        String     @id @default(cuid())
+  leadId    String
+  lead      Lead       @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  authorId  String?
+  author    AdminUser? @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  body      String
+  createdAt DateTime   @default(now())
+
+  @@index([leadId, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Media library
+// ---------------------------------------------------------------------------
+
+model Media {
+  id           String     @id @default(cuid())
+  filename     String
+  originalName String
+  url          String
+  storage      String     @default("local")
+  data         Bytes?
+  mimeType     String
+  type         MediaType  @default(IMAGE)
+  size         Int
+  width        Int?
+  height       Int?
+  alt          String?
+  title        String?
+  folder       String?    @default("uploads")
+  uploadedById String?
+  uploadedBy   AdminUser? @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  isDemo       Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([type])
+  @@index([createdAt])
+  @@index([filename])
+}
+
+// ---------------------------------------------------------------------------
+// Navigation, settings, SEO
+// ---------------------------------------------------------------------------
+
+model NavigationItem {
+  id           String           @id @default(cuid())
+  label        String
+  href         String
+  location     NavLocation      @default(HEADER)
+  parentId     String?
+  parent       NavigationItem?  @relation("NavChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  children     NavigationItem[] @relation("NavChildren")
+  description  String?
+  icon         String?
+  badge        String?
+  order        Int              @default(0)
+  isVisible    Boolean          @default(true)
+  openInNewTab Boolean          @default(false)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@index([location, order])
+  @@index([parentId])
+}
+
+model SiteSettings {
+  id                String   @id @default("singleton")
+  companyName       String   @default("Hyperzen Innovation")
+  legalName         String   @default("Hyperzen Innovation Pvt Ltd")
+  tagline           String   @default("Where ideas meet innovation.")
+  description       String   @default("")
+  logoUrl           String?
+  logoDarkUrl       String?
+  faviconUrl        String?
+  email             String   @default("")
+  phone             String?
+  address           String?
+  addressLocality   String?
+  addressRegion     String?
+  addressCountry    String?  @default("IN")
+  postalCode        String?
+  mapUrl            String?
+  socialLinks       Json     @default("[]")
+  footerDescription String?
+  footerCtaTitle    String?
+  footerCtaText     String?
+  footerCtaLabel    String?
+  footerCtaUrl      String?
+  newsletterTitle   String?
+  newsletterText    String?
+  copyright         String   @default("")
+  primaryCtaLabel   String   @default("Start a Project")
+  primaryCtaUrl     String   @default("/contact")
+  accentColor       String   @default("#5B8CFF")
+  accentColor2      String   @default("#8B5CF6")
+  announcement      Json     @default("{}")
+  analyticsProvider String?  @default("internal")
+  analyticsId       String?
+  maintenanceMode   Boolean  @default(false)
+  updatedAt         DateTime @updatedAt
+
+  @@map("site_settings")
+}
+
+model SEOSettings {
+  id                 String   @id @default("singleton")
+  siteTitle          String   @default("Hyperzen Innovation")
+  titleTemplate      String   @default("%s — Hyperzen Innovation")
+  metaDescription    String   @default("")
+  keywords           String?
+  ogImage            String?
+  twitterHandle      String?
+  twitterCardType    String   @default("summary_large_image")
+  robotsIndex        Boolean  @default(true)
+  robotsFollow       Boolean  @default(true)
+  googleVerification String?
+  bingVerification   String?
+  updatedAt          DateTime @updatedAt
+
+  @@map("seo_settings")
+}
+
+model EmailSettings {
+  id                String   @id @default("singleton")
+  smtpHost          String?
+  smtpPort          Int?     @default(587)
+  smtpUser          String?
+  smtpPassword      String?
+  smtpSecure        Boolean  @default(false)
+  fromEmail         String?
+  fromName          String?
+  notificationEmail String?
+  replyTo           String?
+  enabled           Boolean  @default(false)
+  updatedAt         DateTime @updatedAt
+
+  @@map("email_settings")
+}
+
+// ---------------------------------------------------------------------------
+// Newsletter, analytics, revisions
+// ---------------------------------------------------------------------------
+
+model NewsletterSubscriber {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String?
+  isSubscribed Boolean   @default(true)
+  source       String?
+  confirmedAt  DateTime?
+  isDemo       Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([email])
+  @@index([createdAt])
+}
+
+model AnalyticsEvent {
+  id          String   @id @default(cuid())
+  type        String
+  path        String?
+  label       String?
+  value       String?
+  referrer    String?
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  sessionId   String?
+  country     String?
+  device      String?
+  meta        Json     @default("{}")
+  createdAt   DateTime @default(now())
+
+  @@index([type, createdAt])
+  @@index([path])
+  @@index([createdAt])
+}
+
+model ContentRevision {
+  id         String     @id @default(cuid())
+  entityType String
+  entityId   String
+  data       Json
+  label      String?
+  authorId   String?
+  author     AdminUser? @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  createdAt  DateTime   @default(now())
+
+  @@index([entityType, entityId, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Activity notifications
+// ---------------------------------------------------------------------------
+
+enum NotificationKind {
+  LEAD
+  APPLICATION
+  SUBSCRIBER
+  CONTENT
+  PUBLISH
+  MEDIA
+  SETTINGS
+  ACCOUNT
+  PORTAL
+}
+
+enum NotificationLevel {
+  INFO
+  SUCCESS
+  WARNING
+}
+
+/**
+ * Every change worth telling someone about: a new enquiry, a published page, a
+ * settings change, a customer signing up. Rows are pruned by the retention
+ * window in NotificationSettings.
+ */
+model Notification {
+  id         String            @id @default(cuid())
+  kind       NotificationKind
+  level      NotificationLevel @default(INFO)
+  title      String
+  body       String?
+  href       String?
+  entityType String?
+  entityId   String?
+  actorId    String?
+  actor      AdminUser?        @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  actorName  String?
+  readAt     DateTime?
+  createdAt  DateTime          @default(now())
+
+  @@index([createdAt])
+  @@index([readAt])
+  @@index([kind, createdAt])
+}
+
+model NotificationSettings {
+  id            String   @id @default("singleton")
+  /** Days to keep notifications; 0 keeps them forever. */
+  retentionDays Int      @default(90)
+  notifyLeads   Boolean  @default(true)
+  notifyContent Boolean  @default(true)
+  notifySystem  Boolean  @default(true)
+  lastPurgedAt  DateTime?
+  updatedAt     DateTime @updatedAt
+
+  @@map("notification_settings")
+}
+
+// ---------------------------------------------------------------------------
+// ERP portal accounts
+//
+// Customers sign themselves up through the shared portal at /login. They are
+// deliberately kept separate from AdminUser: CMS staff accounts are created by
+// an administrator and carry content permissions, while these accounts only
+// ever reach the ERP.
+// ---------------------------------------------------------------------------
+
+enum PortalStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+}
+
+enum PortalRole {
+  OWNER
+  MANAGER
+  STAFF
+}
+
+model ErpUser {
+  id           String       @id @default(cuid())
+  email        String       @unique
+  name         String
+  passwordHash String
+  company      String?
+  phone        String?
+  role         PortalRole   @default(OWNER)
+  status       PortalStatus @default(ACTIVE)
+  lastLoginAt  DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  sessions     ErpSession[]
+  resetCodes   PasswordResetCode[]
+
+  @@index([email])
+  @@index([status])
+}
+
+model ErpSession {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      ErpUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userAgent String?
+  ip        String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+
+// ---------------------------------------------------------------------------
+// Staff roles
+//
+// Roles are data, not code: the global admin (and admins) can add roles such as
+// Developer, HR or Finance and choose exactly what each one may do. The system
+// roles cannot be deleted, which guarantees there is always a way back in.
+// ---------------------------------------------------------------------------
+
+model StaffRole {
+  id           String   @id @default(cuid())
+  key          String   @unique
+  name         String
+  description  String?
+  capabilities Json     @default("[]")
+  isSystem     Boolean  @default(false)
+  rank         Int      @default(100)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  users AdminUser[]
+
+  @@index([rank])
+}
+
+// ---------------------------------------------------------------------------
+// Password reset by one-time code
+//
+// A client who has forgotten their password receives a six-digit code by email
+// or SMS. Only a hash of the code is stored, attempts are capped, and the code
+// expires quickly — so a leaked database row is worth nothing.
+// ---------------------------------------------------------------------------
+
+enum OtpChannel {
+  EMAIL
+  SMS
+}
+
+model PasswordResetCode {
+  id          String     @id @default(cuid())
+  userId      String
+  user        ErpUser    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channel     OtpChannel
+  destination String
+  codeHash    String
+  attempts    Int        @default(0)
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  /** Issued once the code is verified; exchanged for the actual password change. */
+  resetToken  String?    @unique
+  resetExpiresAt DateTime?
+  ip          String?
+  createdAt   DateTime   @default(now())
+
+  @@index([userId, createdAt])
+  @@index([expiresAt])
+}

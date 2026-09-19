@@ -1,0 +1,553 @@
+import {
+  SEO_FIELDS,
+  publishingFields,
+  type Field,
+  type ResourceConfig,
+} from "@/lib/admin/fields";
+
+const FEATURE_SUBFIELDS = [
+  { name: "title", label: "Title" },
+  { name: "description", label: "Description", type: "textarea" as const },
+  { name: "icon", label: "Icon", type: "icon" as const },
+];
+
+const PROCESS_SUBFIELDS = [
+  { name: "step", label: "Step", placeholder: "01" },
+  { name: "title", label: "Title" },
+  { name: "description", label: "Description", type: "textarea" as const },
+];
+
+const FAQ_SUBFIELDS = [
+  { name: "question", label: "Question" },
+  { name: "answer", label: "Answer", type: "textarea" as const },
+];
+
+const USE_CASE_SUBFIELDS = [
+  { name: "title", label: "Title" },
+  { name: "description", label: "Description", type: "textarea" as const },
+];
+
+const RESULT_SUBFIELDS = [
+  { name: "value", label: "Value", placeholder: "42%" },
+  { name: "label", label: "Label" },
+];
+
+function slugField(from: string): Field {
+  return {
+    name: "slug",
+    label: "URL slug",
+    type: "slug",
+    required: true,
+    slugFrom: from,
+    group: "Content",
+    width: "half",
+    help: "Lowercase letters, numbers and hyphens. Changing this changes the public URL.",
+  };
+}
+
+// ---------------------------------------------------------------------------
+
+export const RESOURCES: Record<string, ResourceConfig> = {
+  services: {
+    key: "services",
+    model: "service",
+    label: "Services",
+    singular: "Service",
+    description:
+      "Everything Hyperzen offers. Each published service gets its own detail page automatically.",
+    capability: "content.read",
+    titleField: "title",
+    slugField: "slug",
+    publicPath: "/services",
+    hasStatus: true,
+    hasFeatured: true,
+    hasOrder: true,
+    searchFields: ["title", "shortDesc", "slug"],
+    jsonFields: [
+      "features",
+      "capabilities",
+      "process",
+      "technologies",
+      "benefits",
+      "useCases",
+      "faqs",
+    ],
+    listColumns: [
+      { name: "title", label: "Service" },
+      { name: "status", label: "Status", type: "status" },
+      { name: "isFeatured", label: "Featured", type: "boolean" },
+      { name: "order", label: "Order", type: "number" },
+      { name: "updatedAt", label: "Updated", type: "date" },
+    ],
+    groups: ["Content", "Detail page", "Lists", "CTA", "Publishing", "SEO"],
+    fields: [
+      { name: "title", label: "Title", type: "text", required: true, group: "Content", width: "half" },
+      slugField("title"),
+      { name: "icon", label: "Icon", type: "icon", group: "Content", width: "half" },
+      { name: "tagline", label: "Tagline", type: "text", group: "Content", width: "half", placeholder: "Applied intelligence, not experiments" },
+      {
+        name: "shortDesc",
+        label: "Short description",
+        type: "textarea",
+        required: true,
+        rows: 3,
+        group: "Content",
+        help: "Used on cards, listings and search results.",
+      },
+      { name: "imageUrl", label: "Image", type: "image", group: "Content", width: "half" },
+      { name: "videoUrl", label: "Video URL", type: "text", group: "Content", width: "half" },
+
+      { name: "heroTitle", label: "Hero headline", type: "text", group: "Detail page" },
+      { name: "heroSubtitle", label: "Hero subtitle", type: "textarea", rows: 2, group: "Detail page" },
+      { name: "problemTitle", label: "Problem heading", type: "text", group: "Detail page", width: "half" },
+      { name: "solutionTitle", label: "Solution heading", type: "text", group: "Detail page", width: "half" },
+      { name: "problemText", label: "Problem", type: "textarea", rows: 5, group: "Detail page" },
+      { name: "solutionText", label: "Solution", type: "textarea", rows: 5, group: "Detail page" },
+      { name: "detailedDesc", label: "Extended description", type: "textarea", rows: 6, group: "Detail page", help: "Separate paragraphs with a blank line." },
+
+      { name: "features", label: "Capability cards", type: "repeater", subfields: FEATURE_SUBFIELDS, group: "Lists" },
+      { name: "capabilities", label: "Also covered", type: "list", group: "Lists", help: "One item per line." },
+      { name: "process", label: "Process steps", type: "repeater", subfields: PROCESS_SUBFIELDS, group: "Lists" },
+      { name: "technologies", label: "Technologies", type: "list", group: "Lists", help: "One per line." },
+      { name: "benefits", label: "Outcomes", type: "list", group: "Lists", help: "One per line." },
+      { name: "useCases", label: "Use cases", type: "repeater", subfields: USE_CASE_SUBFIELDS, group: "Lists" },
+      { name: "faqs", label: "FAQs", type: "repeater", subfields: FAQ_SUBFIELDS, group: "Lists" },
+
+      { name: "ctaTitle", label: "CTA heading", type: "text", group: "CTA" },
+      { name: "ctaDescription", label: "CTA description", type: "textarea", rows: 2, group: "CTA" },
+      { name: "ctaLabel", label: "CTA button label", type: "text", group: "CTA", width: "half" },
+      { name: "ctaUrl", label: "CTA button URL", type: "text", group: "CTA", width: "half" },
+
+      ...publishingFields({ featured: true, order: true }),
+      ...SEO_FIELDS,
+    ],
+  },
+
+  solutions: {
+    key: "solutions",
+    model: "solution",
+    label: "Solutions",
+    singular: "Solution",
+    description: "Outcome-shaped programmes that combine several services.",
+    capability: "content.read",
+    titleField: "title",
+    slugField: "slug",
+    publicPath: "/solutions",
+    hasStatus: true,
+    hasFeatured: true,
+    hasOrder: true,
+    searchFields: ["title", "shortDesc", "slug"],
+    jsonFields: ["outcomes", "capabilities", "deliverables", "technologies", "faqs"],
+    listColumns: [
+      { name: "title", label: "Solution" },
+      { name: "status", label: "Status", type: "status" },
+      { name: "isFeatured", label: "Featured", type: "boolean" },
+      { name: "order", label: "Order", type: "number" },
+      { name: "updatedAt", label: "Updated", type: "date" },
+    ],
+    groups: ["Content", "Lists", "Publishing", "SEO"],
+    fields: [
+      { name: "title", label: "Title", type: "text", required: true, group: "Content", width: "half" },
+      slugField("title"),
+      { name: "icon", label: "Icon", type: "icon", group: "Content", width: "half" },
+      { name: "heroTitle", label: "Hero headline", type: "text", group: "Content", width: "half" },
+      { name: "shortDesc", label: "Short description", type: "textarea", required: true, rows: 3, group: "Content" },
+      { name: "overview", label: "Overview", type: "textarea", rows: 6, group: "Content", help: "Separate paragraphs with a blank line." },
+      { name: "imageUrl", label: "Image", type: "image", group: "Content" },
+
+      { name: "outcomes", label: "Outcomes", type: "list", group: "Lists", help: "One per line." },
+      { name: "capabilities", label: "Capabilities", type: "list", group: "Lists" },
+      { name: "deliverables", label: "Deliverables", type: "list", group: "Lists" },
+      { name: "technologies", label: "Technologies", type: "list", group: "Lists" },
+      { name: "faqs", label: "FAQs", type: "repeater", subfields: FAQ_SUBFIELDS, group: "Lists" },
+
+      ...publishingFields({ featured: true, order: true }),
+      ...SEO_FIELDS,
+    ],
+  },
+
+  industries: {
+    key: "industries",
+    model: "industry",
+    label: "Industries",
+    singular: "Industry",
+    description: "Sector pages with the challenges and solutions specific to each.",
+    capability: "content.read",
+    titleField: "name",
+    slugField: "slug",
+    publicPath: "/industries",
+    hasStatus: true,
+    hasFeatured: true,
+    hasOrder: true,
+    searchFields: ["name", "shortDesc", "slug"],
+    jsonFields: ["challenges", "solutions", "useCases", "stats", "faqs"],
+    listColumns: [
+      { name: "name", label: "Industry" },
+      { name: "status", label: "Status", type: "status" },
+      { name: "isFeatured", label: "Featured", type: "boolean" },
+      { name: "order", label: "Order", type: "number" },
+      { name: "updatedAt", label: "Updated", type: "date" },
+    ],
+    groups: ["Content", "Lists", "Publishing", "SEO"],
+    fields: [
+      { name: "name", label: "Name", type: "text", required: true, group: "Content", width: "half" },
+      slugField("name"),
+      { name: "icon", label: "Icon", type: "icon", group: "Content", width: "half" },
+      { name: "heroTitle", label: "Hero headline", type: "text", group: "Content", width: "half" },
+      { name: "shortDesc", label: "Short description", type: "textarea", required: true, rows: 3, group: "Content" },
+      { name: "description", label: "Description", type: "textarea", rows: 6, group: "Content" },
+      { name: "imageUrl", label: "Image", type: "image", group: "Content" },
+
+      { name: "challenges", label: "Challenges", type: "list", group: "Lists", help: "One per line." },
+      { name: "solutions", label: "How we help", type: "list", group: "Lists" },
+      { name: "useCases", label: "Use cases", type: "repeater", subfields: USE_CASE_SUBFIELDS, group: "Lists" },
+      { name: "stats", label: "Statistics", type: "repeater", subfields: RESULT_SUBFIELDS, group: "Lists", help: "Only add numbers you can verify." },
+      { name: "faqs", label: "FAQs", type: "repeater", subfields: FAQ_SUBFIELDS, group: "Lists" },
+
+      ...publishingFields({ featured: true, order: true }),
+      ...SEO_FIELDS,
+    ],
+  },
+
+  products: {
+    key: "products",
+    model: "product",
+    label: "Products",
+    singular: "Product",
+    description: "Products built in-house, each with its own showcase page.",
+    capability: "content.read",
+    titleField: "name",
+    slugField: "slug",
+    publicPath: "/products",
+    hasStatus: true,
+    hasFeatured: true,
+    hasOrder: true,
+    searchFields: ["name", "description", "slug"],
+    jsonFields: ["screenshots", "features", "technologies", "pricing"],
+    listColumns: [
+      { name: "name", label: "Product" },
+      { name: "productStatus", label: "Stage", type: "badge" },
+      { name: "status", label: "Status", type: "status" },
+      { name: "isFeatured", label: "Featured", type: "boolean" },
+      { name: "updatedAt", label: "Updated", type: "date" },
+    ],
+    groups: ["Content", "Media", "Lists", "Links", "Publishing", "SEO"],
+    fields: [
+      { name: "name", label: "Name", type: "text", required: true, group: "Content", width: "half" },
+      slugField("name"),
+      { name: "tagline", label: "Tagline", type: "text", group: "Content", width: "half" },
+      { name: "category", label: "Category", type: "text", group: "Content", width: "half" },
+      { name: "description", label: "Short description", type: "textarea", required: true, rows: 3, group: "Content" },
+      { name: "longDescription", label: "Full description", type: "textarea", rows: 6, group: "Content" },
+      {
+        name: "productStatus",
+        label: "Product stage",
+        type: "select",
+        group: "Content",
+        width: "half",
+        options: [
+          { label: "Concept", value: "CONCEPT" },
+          { label: "In development", value: "IN_DEVELOPMENT" },
+          { label: "Beta", value: "BETA" },
+          { label: "Live", value: "LIVE" },
+          { label: "Sunset", value: "SUNSET" },
+        ],
+      },
+
+      { name: "logoUrl", label: "Logo", type: "image", group: "Media", width: "half" },
+      { name: "coverUrl", label: "Cover image", type: "image", group: "Media", width: "half" },
+      { name: "screenshots", label: "Screenshots", type: "list", group: "Media", help: "One image URL per line." },
+
+      { name: "features", label: "Features", type: "repeater", subfields: FEATURE_SUBFIELDS, group: "Lists" },
+      { name: "technologies", label: "Technologies", type: "list", group: "Lists" },
+      {
+        name: "pricing",
+        label: "Pricing tiers",
+        type: "repeater",
+        group: "Lists",
+        subfields: [
+          { name: "name", label: "Plan name" },
+          { name: "price", label: "Price" },
+          { name: "description", label: "Description", type: "textarea" },
+        ],
+      },
+
+      { name: "websiteUrl", label: "Website URL", type: "text", group: "Links", width: "half" },
+      { name: "ctaLabel", label: "CTA label", type: "text", group: "Links", width: "half" },
+      { name: "ctaUrl", label: "CTA URL", type: "text", group: "Links" },
+
+      ...publishingFields({ featured: true, order: true }),
+      ...SEO_FIELDS,
+    ],
+  },
+
+  projects: {
+    key: "projects",
+    model: "project",
+    label: "Projects",
+    singular: "Project",
+    description:
+      "Case studies. Publish only work the client has approved and results you can verify.",
+    capability: "content.read",
+    titleField: "title",
+    slugField: "slug",
+    publicPath: "/projects",
+    hasStatus: true,
+    hasFeatured: true,
+    hasOrder: true,
+    searchFields: ["title", "summary", "clientName", "slug"],
+    jsonFields: ["results", "technologies", "images"],
+    relations: [
+      { field: "industryId", model: "industries" },
+      { field: "testimonialId", model: "testimonials" },
+      { field: "serviceIds", model: "services", many: true },
+    ],
+    listColumns: [
+      { name: "title", label: "Project" },
+      { name: "clientName", label: "Client" },
+      { name: "status", label: "Status", type: "status" },
+      { name: "isFeatured", label: "Featured", type: "boolean" },
+      { name: "updatedAt", label: "Updated", type: "date" },
+    ],
+    groups: ["Content", "Story", "Media", "Relations", "Publishing", "SEO"],
+    fields: [
+      { name: "title", label: "Title", type: "text", required: true, group: "Content", width: "half" },
+      slugField("title"),
+      { name: "clientName", label: "Client name", type: "text", group: "Content", width: "half" },
+      { name: "clientLogoUrl", label: "Client logo", type: "image", group: "Content", width: "half" },
+      { name: "summary", label: "Summary", type: "textarea", required: true, rows: 3, group: "Content" },
+      { name: "year", label: "Year", type: "number", group: "Content", width: "half" },
+      { name: "duration", label: "Duration", type: "text", group: "Content", width: "half", placeholder: "4 months" },
+
+      { name: "challenge", label: "Challenge", type: "textarea", rows: 6, group: "Story" },
+      { name: "solutionText", label: "Solution", type: "textarea", rows: 6, group: "Story" },
+      { name: "results", label: "Results", type: "repeater", subfields: RESULT_SUBFIELDS, group: "Story", help: "Only publish figures the client has agreed to." },
+      { name: "technologies", label: "Technologies", type: "list", group: "Story" },
+
+      { name: "coverUrl", label: "Cover image", type: "image", group: "Media", width: "half" },
+      { name: "videoUrl", label: "Video URL", type: "text", group: "Media", width: "half" },
+      { name: "images", label: "Gallery", type: "list", group: "Media", help: "One image URL per line." },
+      { name: "projectUrl", label: "Live URL", type: "text", group: "Media" },
+
+      { name: "industryId", label: "Industry", type: "relation", source: "industries", group: "Relations", width: "half" },
+      { name: "testimonialId", label: "Testimonial", type: "relation", source: "testimonials", group: "Relations", width: "half" },
+      { name: "serviceIds", label: "Services involved", type: "multirelation", source: "services", group: "Relations" },
+
+      ...publishingFields({ featured: true, order: true }),
+      ...SEO_FIELDS,
+    ],
+  },
+
+  testimonials: {
+    key: "testimonials",
+    model: "testimonial",
+    label: "Testimonials",
+    singular: "Testimonial",
+    description: "Client quotes. Publish only quotes you have permission to use.",
+    capability: "content.read",
+    titleField: "clientName",
+    hasStatus: true,
+    hasFeatured: true,
+    hasOrder: true,
+    searchFields: ["clientName", "company", "quote"],
+    listColumns: [
+      { name: "clientName", label: "Client" },
+      { name: "company", label: "Company" },
+      { name: "rating", label: "Rating", type: "number" },
+      { name: "status", label: "Status", type: "status" },
+      { name: "isFeatured", label: "Featured", type: "boolean" },
+    ],
+    groups: ["Content", "Publishing"],
+    fields: [
+      { name: "clientName", label: "Client name", type: "text", required: true, group: "Content", width: "half" },
+      { name: "designation", label: "Designation", type: "text", group: "Content", width: "half" },
+      { name: "company", label: "Company", type: "text", group: "Content", width: "half" },
+      {
+        name: "rating",
+        label: "Rating",
+        type: "select",
+        group: "Content",
+        width: "half",
+        options: [1, 2, 3, 4, 5].map((value) => ({ label: `${value} star${value > 1 ? "s" : ""}`, value: String(value) })),
+      },
+      { name: "quote", label: "Quote", type: "textarea", required: true, rows: 5, group: "Content" },
+      { name: "photoUrl", label: "Photo", type: "image", group: "Content", width: "half" },
+      { name: "companyLogo", label: "Company logo", type: "image", group: "Content", width: "half" },
+
+      ...publishingFields({ featured: true, order: true }),
+    ],
+  },
+
+  insights: {
+    key: "insights",
+    model: "blogPost",
+    label: "Insights",
+    singular: "Article",
+    description: "Articles, technology notes, case study write-ups and announcements.",
+    capability: "content.read",
+    titleField: "title",
+    slugField: "slug",
+    publicPath: "/insights",
+    hasStatus: true,
+    hasFeatured: true,
+    searchFields: ["title", "excerpt", "slug"],
+    relations: [{ field: "categoryId", model: "categories" }],
+    listColumns: [
+      { name: "title", label: "Article" },
+      { name: "status", label: "Status", type: "status" },
+      { name: "isFeatured", label: "Featured", type: "boolean" },
+      { name: "publishedAt", label: "Published", type: "date" },
+      { name: "views", label: "Views", type: "number" },
+    ],
+    groups: ["Content", "Meta", "Publishing", "SEO"],
+    fields: [
+      { name: "title", label: "Title", type: "text", required: true, group: "Content" },
+      slugField("title"),
+      { name: "coverUrl", label: "Cover image", type: "image", group: "Content", width: "half" },
+      { name: "excerpt", label: "Excerpt", type: "textarea", rows: 3, group: "Content", help: "Shown on cards and in search results." },
+      { name: "content", label: "Article", type: "richtext", group: "Content" },
+
+      { name: "authorName", label: "Author", type: "text", group: "Meta", width: "half" },
+      { name: "categoryId", label: "Category", type: "relation", source: "categories", group: "Meta", width: "half" },
+      { name: "tags", label: "Tags", type: "tags", group: "Meta", help: "Comma separated." },
+      { name: "publishedAt", label: "Publish date", type: "date", group: "Meta", width: "half" },
+
+      ...publishingFields({ featured: true }),
+      ...SEO_FIELDS,
+    ],
+  },
+
+  categories: {
+    key: "categories",
+    model: "category",
+    label: "Categories",
+    singular: "Category",
+    description: "Groups used to organise insights.",
+    capability: "content.read",
+    titleField: "name",
+    slugField: "slug",
+    hasOrder: true,
+    searchFields: ["name", "slug"],
+    listColumns: [
+      { name: "name", label: "Category" },
+      { name: "slug", label: "Slug" },
+      { name: "order", label: "Order", type: "number" },
+    ],
+    groups: ["Content"],
+    fields: [
+      { name: "name", label: "Name", type: "text", required: true, group: "Content", width: "half" },
+      slugField("name"),
+      { name: "description", label: "Description", type: "textarea", rows: 2, group: "Content" },
+      { name: "color", label: "Colour", type: "color", group: "Content", width: "half" },
+      { name: "order", label: "Sort order", type: "number", group: "Content", width: "half" },
+    ],
+  },
+
+  careers: {
+    key: "careers",
+    model: "job",
+    label: "Careers",
+    singular: "Job opening",
+    description: "Open roles. Each published role gets a page and an application form.",
+    capability: "content.read",
+    titleField: "title",
+    slugField: "slug",
+    publicPath: "/careers",
+    hasStatus: true,
+    hasOrder: true,
+    searchFields: ["title", "department", "location", "slug"],
+    jsonFields: ["responsibilities", "requirements", "benefits"],
+    listColumns: [
+      { name: "title", label: "Role" },
+      { name: "department", label: "Department" },
+      { name: "location", label: "Location" },
+      { name: "status", label: "Status", type: "status" },
+      { name: "updatedAt", label: "Updated", type: "date" },
+    ],
+    groups: ["Content", "Details", "Lists", "Applications", "Publishing", "SEO"],
+    fields: [
+      { name: "title", label: "Job title", type: "text", required: true, group: "Content", width: "half" },
+      slugField("title"),
+      { name: "department", label: "Department", type: "text", required: true, group: "Content", width: "half" },
+      { name: "location", label: "Location", type: "text", required: true, group: "Content", width: "half" },
+      {
+        name: "workMode",
+        label: "Work mode",
+        type: "select",
+        group: "Details",
+        width: "half",
+        options: [
+          { label: "On-site", value: "ONSITE" },
+          { label: "Hybrid", value: "HYBRID" },
+          { label: "Remote", value: "REMOTE" },
+        ],
+      },
+      {
+        name: "employmentType",
+        label: "Employment type",
+        type: "select",
+        group: "Details",
+        width: "half",
+        options: [
+          { label: "Full-time", value: "FULL_TIME" },
+          { label: "Part-time", value: "PART_TIME" },
+          { label: "Contract", value: "CONTRACT" },
+          { label: "Internship", value: "INTERNSHIP" },
+          { label: "Freelance", value: "FREELANCE" },
+        ],
+      },
+      { name: "experience", label: "Experience", type: "text", group: "Details", width: "half", placeholder: "2–5 years" },
+      { name: "salaryCurrency", label: "Salary currency", type: "text", group: "Details", width: "half", placeholder: "INR" },
+      { name: "salaryMin", label: "Salary minimum", type: "number", group: "Details", width: "half" },
+      { name: "salaryMax", label: "Salary maximum", type: "number", group: "Details", width: "half" },
+      { name: "showSalary", label: "Show salary publicly", type: "switch", group: "Details", width: "half" },
+      { name: "description", label: "Description", type: "textarea", required: true, rows: 6, group: "Content" },
+
+      { name: "responsibilities", label: "Responsibilities", type: "list", group: "Lists", help: "One per line." },
+      { name: "requirements", label: "Requirements", type: "list", group: "Lists" },
+      { name: "benefits", label: "Benefits", type: "list", group: "Lists" },
+
+      { name: "applyEmail", label: "Application email", type: "text", group: "Applications", width: "half" },
+      { name: "applyUrl", label: "External application URL", type: "text", group: "Applications", width: "half", help: "If set, the built-in form is replaced by a link." },
+      { name: "closesAt", label: "Closing date", type: "date", group: "Applications", width: "half" },
+
+      ...publishingFields({ order: true }),
+      { name: "seoTitle", label: "SEO title", type: "text", group: "SEO" },
+      { name: "seoDescription", label: "Meta description", type: "textarea", rows: 3, group: "SEO" },
+      { name: "noIndex", label: "Hide from search engines", type: "switch", group: "SEO" },
+    ],
+  },
+
+  faqs: {
+    key: "faqs",
+    model: "fAQ",
+    label: "FAQs",
+    singular: "FAQ",
+    description:
+      "Shared question library. Used by the FAQ block on the homepage, services and contact pages.",
+    capability: "content.read",
+    titleField: "question",
+    hasStatus: true,
+    hasOrder: true,
+    searchFields: ["question", "answer", "category"],
+    listColumns: [
+      { name: "question", label: "Question" },
+      { name: "category", label: "Category" },
+      { name: "status", label: "Status", type: "status" },
+      { name: "order", label: "Order", type: "number" },
+    ],
+    groups: ["Content", "Publishing"],
+    fields: [
+      { name: "question", label: "Question", type: "text", required: true, group: "Content" },
+      { name: "answer", label: "Answer", type: "textarea", required: true, rows: 5, group: "Content" },
+      { name: "category", label: "Category", type: "text", group: "Content", width: "half", placeholder: "Working together" },
+      ...publishingFields({ order: true }),
+    ],
+  },
+};
+
+export function getResource(key: string): ResourceConfig | null {
+  return RESOURCES[key] ?? null;
+}
+
+export const RESOURCE_KEYS = Object.keys(RESOURCES);
